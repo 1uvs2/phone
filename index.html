@@ -1,0 +1,516 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#f2f2f7">
+<title>설정</title>
+<style>
+  :root{
+    --bg:#f2f2f7; --card:#fff; --text:#000; --sub:#8a8a8e; --sep:#e3e3e8;
+    --blue:#007aff; --red:#ff3b30; --green:#34c759; --btn:#0a62f5;
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Apple SD Gothic Neo","Noto Sans KR",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0}
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);font-size:17px;letter-spacing:-.2px}
+  body{overflow:hidden}
+  #app{position:relative;max-width:440px;height:100%;margin:0 auto;overflow:hidden;background:var(--bg)}
+
+  /* ---------- page stack ---------- */
+  .page{position:absolute;inset:0;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch;
+        padding:0 16px 120px;transition:transform .35s cubic-bezier(.32,.72,0,1);will-change:transform}
+  .page.off-right{transform:translateX(100%)}
+  .page.off-left{transform:translateX(-28%)}
+  .page.hidden{display:none}
+
+  h1.large{font-size:34px;font-weight:700;padding:14px 4px 14px;letter-spacing:.2px}
+  .nav{position:sticky;top:0;z-index:5;display:flex;align-items:center;justify-content:center;height:60px;
+       margin:0 -16px;padding:0 16px;background:linear-gradient(var(--bg) 70%,rgba(242,242,247,0))}
+  .nav .title{font-size:17px;font-weight:600}
+  .nav .back{position:absolute;left:12px;top:50%;transform:translateY(-50%);border:0;background:none;
+       color:var(--blue);font-size:17px;display:flex;align-items:center;gap:2px;cursor:pointer;font-family:inherit}
+  .nav .back.circle{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.9);
+       box-shadow:0 1px 6px rgba(0,0,0,.08);justify-content:center;color:#000}
+  .nav .back svg{width:12px;height:20px}
+
+  /* ---------- groups / rows ---------- */
+  .group{background:var(--card);border-radius:14px;overflow:hidden;margin-bottom:22px}
+  .ghead{font-size:13px;color:var(--sub);padding:0 16px 7px;margin-top:-6px}
+  .row{display:flex;align-items:center;min-height:48px;padding:0 14px 0 16px;position:relative;cursor:pointer;user-select:none}
+  .row:active{background:#e5e5ea}
+  .row.static{cursor:default}.row.static:active{background:none}
+  .row+.row::before{content:"";position:absolute;top:0;right:0;left:16px;height:.5px;background:var(--sep)}
+  .row.ic+.row::before,.row.ic+.row.ic::before{left:58px}
+  .icon{width:30px;height:30px;border-radius:7px;flex:none;display:grid;place-items:center;margin-right:12px}
+  .icon svg{width:19px;height:19px;fill:#fff}
+  .lbl{flex:1;min-width:0;padding:12px 0}
+  .lbl small{display:block;font-size:12px;color:var(--sub);margin-top:1px}
+  .val{color:var(--sub);font-size:16px;margin-left:8px;white-space:nowrap}
+  .chev{width:8px;height:14px;margin-left:8px;flex:none;stroke:#c4c4c7;stroke-width:2.2;fill:none}
+  .danger{color:var(--red)}
+  .badge{background:var(--red);color:#fff;font-size:14px;min-width:22px;height:22px;border-radius:11px;
+         display:grid;place-items:center;margin-left:8px;padding:0 6px}
+
+  .switch{width:51px;height:31px;border-radius:16px;background:#e9e9eb;position:relative;flex:none;transition:background .2s;cursor:pointer}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:50%;background:#fff;
+       box-shadow:0 2px 4px rgba(0,0,0,.18);transition:transform .25s}
+  .switch.on{background:var(--green)}.switch.on::after{transform:translateX(20px)}
+
+  /* ---------- profile ---------- */
+  .profile{display:flex;align-items:center;padding:14px 14px 14px 16px;gap:14px;cursor:pointer}
+  .avatar{width:58px;height:58px;border-radius:50%;background:#d8d8dd center/cover no-repeat;flex:none;display:grid;place-items:center;overflow:hidden}
+  .avatar svg{width:34px;height:34px}
+  .pname{font-size:20px;font-weight:600}
+  .psub{font-size:13px;color:var(--sub);margin-top:2px}
+
+  .editor{display:none;margin:-8px 0 22px}
+  .editor.open{display:block}
+  .field{width:100%;height:44px;border:1px solid #d1d1d6;border-radius:10px;background:#fff;padding:0 12px;
+         font-size:17px;font-family:inherit;outline:none;color:#000}
+  .field:focus{border-color:#a0a0a8}
+  .filebox{display:flex;align-items:center;gap:10px;height:46px;margin-top:10px;border:1px solid #d1d1d6;border-radius:10px;
+           background:#f7f7f8;padding:0 12px;font-size:15px;cursor:pointer}
+  .filebox .fbtn{font-size:11px;background:#e5e5ea;border-radius:5px;padding:4px 8px;color:#333}
+  .filebox .fname{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .btn{display:block;width:100%;height:40px;margin-top:10px;border:0;border-radius:10px;font-size:14px;font-family:inherit;cursor:pointer}
+  .btn.primary{background:var(--btn);color:#fff}
+  .btn.primary:active{background:#0751c9}
+  .btn.ghost{background:#e5e5ea;color:#000}
+  .numbox{padding:16px}
+  .numbox label{font-size:12px;color:var(--sub);display:block;margin-bottom:8px}
+  .numbox .btn{height:46px;font-size:17px}
+
+  /* ---------- cellular header ---------- */
+  .hero{padding:18px 16px}
+  .hero .icon{width:42px;height:42px;border-radius:10px;margin:0 0 12px}
+  .hero .icon svg{width:26px;height:26px}
+  .hero h2{font-size:22px;font-weight:700;margin-bottom:6px}
+  .hero p{font-size:13.5px;color:#55555a;line-height:1.45}
+  .hero a{color:var(--blue);font-size:14px;text-decoration:none;display:inline-block;margin-top:4px}
+  .note{font-size:12.5px;color:var(--sub);padding:0 16px 12px;line-height:1.4;margin-top:-4px}
+  .sectlbl{font-size:14px;color:var(--sub);padding:2px 16px 8px}
+
+  /* ---------- my number ---------- */
+  .numband{background:#fff;text-align:center;padding:14px;font-size:17px;margin:34vh -16px 0}
+
+  /* ---------- search ---------- */
+  .searchdock{position:absolute;left:0;right:0;bottom:0;z-index:20;padding:10px 16px calc(14px + env(safe-area-inset-bottom));
+       display:flex;justify-content:center;pointer-events:none}
+  .pill{pointer-events:auto;display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:18px;
+       background:rgba(255,255,255,.8);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+       box-shadow:0 2px 12px rgba(0,0,0,.1);font-size:15px;color:#3c3c43;cursor:pointer;border:0;font-family:inherit}
+  .pill svg{width:15px;height:15px;stroke:#3c3c43;fill:none;stroke-width:2.2}
+  #searchView{position:absolute;inset:0;z-index:30;background:var(--bg);display:none;flex-direction:column}
+  #searchView.open{display:flex}
+  #results{flex:1;overflow-y:auto;padding:16px 16px 0}
+  .sbar{display:flex;align-items:center;gap:10px;padding:10px 16px calc(12px + env(safe-area-inset-bottom))}
+  .sfield{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:48px;border-radius:24px;background:#fff;padding:0 8px 0 16px;
+       box-shadow:0 2px 14px rgba(0,0,0,.1)}
+  .sfield svg.mag{width:18px;height:18px;stroke:#000;fill:none;stroke-width:2.3;flex:none}
+  .sfield input{flex:1;border:0;outline:0;font-size:17px;background:none;font-family:inherit;min-width:0}
+  .clear{width:24px;height:24px;border-radius:50%;background:#000;border:0;display:grid;place-items:center;cursor:pointer;flex:none}
+  .clear svg{width:10px;height:10px;stroke:#fff;stroke-width:3}
+  .xbtn{width:48px;height:48px;border-radius:50%;background:#fff;border:0;display:grid;place-items:center;
+       box-shadow:0 2px 14px rgba(0,0,0,.1);cursor:pointer;flex:none}
+  .xbtn svg{width:16px;height:16px;stroke:#000;stroke-width:2.4}
+  .empty{text-align:center;color:var(--sub);margin-top:30vh;font-size:15px}
+
+  .toast{position:absolute;left:50%;bottom:40px;transform:translate(-50%,120px);background:rgba(30,30,30,.88);color:#fff;
+        font-size:14px;padding:9px 16px;border-radius:20px;z-index:50;transition:transform .3s;pointer-events:none}
+  .toast.show{transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== 설정 (main) ===================== -->
+  <section class="page" id="p-main" data-title="설정">
+    <h1 class="large">설정</h1>
+
+    <div class="group">
+      <div class="profile" id="profileCard">
+        <div class="avatar" data-avatar></div>
+        <div style="flex:1;min-width:0">
+          <div class="pname" data-name>김이름</div>
+          <div class="psub">Apple 계정, iCloud+ 등</div>
+        </div>
+        <svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg>
+      </div>
+    </div>
+
+    <div class="editor" id="editor">
+      <input class="field" id="nameInput" placeholder="이름" autocomplete="off">
+      <label class="filebox">
+        <span class="fbtn">파일 선택</span>
+        <span class="fname" id="fileName">선택한 파일 없음</span>
+        <input type="file" id="fileInput" accept="image/*" hidden>
+      </label>
+      <button class="btn primary" id="saveProfile">저장</button>
+      <button class="btn ghost" id="closeEditor">닫기</button>
+    </div>
+
+    <div class="group">
+      <div class="row"><div class="lbl">소프트웨어 업데이트 사용 가능</div><span class="badge">1</span>
+        <svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+
+    <div class="group">
+      <div class="row ic static"><div class="icon" style="background:#ff9500" data-ico="plane"></div><div class="lbl">에어플레인 모드</div><div class="switch"></div></div>
+      <div class="row ic"><div class="icon" style="background:#007aff" data-ico="wifi"></div><div class="lbl">Wi-Fi</div><span class="val">연결 안 됨</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#007aff" data-ico="bt"></div><div class="lbl">Bluetooth</div><span class="val">켬</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic" data-go="cellular"><div class="icon" style="background:#34c759" data-ico="cell"></div><div class="lbl">셀룰러</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#34c759" data-ico="link"></div><div class="lbl">개인용 핫스팟</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#34c759" data-ico="batt"></div><div class="lbl">배터리</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+
+    <div class="group">
+      <div class="row ic"><div class="icon" style="background:#8e8e93" data-ico="gear"></div><div class="lbl">일반</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#007aff" data-ico="access"></div><div class="lbl">손쉬운 사용</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#8e8e93" data-ico="mag"></div><div class="lbl">검색</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#5856d6" data-ico="sun"></div><div class="lbl">디스플레이 및 밝기</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#ff3b30" data-ico="bell"></div><div class="lbl">알림</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+
+    <div class="group">
+      <div class="row ic" data-go="phone"><div class="icon" style="background:#34c759" data-ico="phone"></div><div class="lbl">전화</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#34c759" data-ico="msg"></div><div class="lbl">메시지</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+  </section>
+
+  <!-- ===================== 전화 ===================== -->
+  <section class="page hidden" id="p-phone" data-title="전화">
+    <div class="nav"><button class="back circle" data-back><svg viewBox="0 0 12 20"><path d="M10 2L2 10l8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="title">전화</div></div>
+    <div class="ghead" style="margin-top:8px">전화 접근 허용</div>
+    <div class="group">
+      <div class="row ic"><div class="icon" style="background:linear-gradient(135deg,#ff6ec4,#7873f5,#4adede)" data-ico="spark"></div><div class="lbl">Apple Intelligence 및 Siri</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#8e8e93" data-ico="mag"></div><div class="lbl">검색</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#ff3b30" data-ico="bell"></div><div class="lbl">알림<small>배너, 사운드, 배지</small></div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic static"><div class="icon" style="background:#34c759" data-ico="cell"></div><div class="lbl">셀룰러 데이터</div><div class="switch on"></div></div>
+    </div>
+    <div class="group">
+      <div class="row"><div class="lbl">기본 통화 앱</div><span class="val">셀룰러</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="ghead">선호하는 언어</div>
+    <div class="group">
+      <div class="row ic"><div class="icon" style="background:#007aff" data-ico="globe"></div><div class="lbl">언어</div><span class="val">한국어</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="group">
+      <div class="row ic"><div class="icon" style="background:#34c759" data-ico="phone"></div><div class="lbl">착신 통화</div><span class="val">배너</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row ic"><div class="icon" style="background:#ff3b30" data-ico="phone"></div><div class="lbl">발신자 알리기</div><span class="val">헤드폰</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="group">
+      <div class="row" data-go="mynum"><div class="lbl">나의 전화번호</div><span class="val" data-num>+82 10-1234-5678</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="group">
+      <div class="row"><div class="lbl">이름 및 사진 공유</div><span class="val">켬</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">통화 녹음</div><span class="val">켬</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">차단된 연락처</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+  </section>
+
+  <!-- ===================== 나의 전화번호 ===================== -->
+  <section class="page hidden" id="p-mynum" data-title="나의 전화번호">
+    <div class="nav"><button class="back circle" data-back><svg viewBox="0 0 12 20"><path d="M10 2L2 10l8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button><div class="title">나의 전화번호</div></div>
+    <div class="numband" data-num>+82 10-1234-5678</div>
+  </section>
+
+  <!-- ===================== 셀룰러 ===================== -->
+  <section class="page hidden" id="p-cellular" data-title="셀룰러">
+    <div class="nav"><button class="back" data-back><svg viewBox="0 0 12 20"><path d="M10 2L2 10l8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>설정</button><div class="title">셀룰러</div></div>
+    <div class="group hero">
+      <div class="icon" style="background:#34c759" data-ico="cell"></div>
+      <h2>셀룰러</h2>
+      <p>데이터 사용량을 확인하고, 데이터 제한을 설정하며, eSIM 및 Wi-Fi 통화 등의 이동통신 설정을 관리합니다.</p>
+      <a href="#" onclick="return false">더 알아보기...</a>
+    </div>
+    <div class="group">
+      <div class="row"><div class="lbl">셀룰러 데이터</div><span class="val">메인</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">개인용 핫스팟</div><span class="val">켬</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="note">이메일, 웹 브라우징, 푸시 알림 등을 포함하여 모든 데이터를 Wi-Fi만 사용하도록 제한하려면, 셀룰러 데이터를 끄십시오.</div>
+    <div class="group">
+      <div class="row"><div class="lbl">기본 음성 회선</div><span class="val">메인</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="sectlbl">SIMs</div>
+    <div class="group">
+      <div class="row" data-go="carrier"><div class="lbl" style="font-weight:600">메인<small style="font-weight:400" data-num>+82 10-1234-5678</small></div><span class="val">켬</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">여행용<small>전화번호 없음</small></div><span class="val">꺼짐</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">업무용<small>전화번호 없음</small></div><span class="val">꺼짐</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="group">
+      <div class="row"><div class="lbl">이동통신사 서비스</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">SIM PIN</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="group"><div class="row"><div class="lbl danger">eSIM 삭제</div></div></div>
+    <div class="group numbox" data-numeditor></div>
+  </section>
+
+  <!-- ===================== LG U+ (SIM 상세) ===================== -->
+  <section class="page hidden" id="p-carrier" data-title="LG U+">
+    <div class="nav"><button class="back" data-back><svg viewBox="0 0 12 20"><path d="M10 2L2 10l8 8" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>셀룰러</button><div class="title">LG U+</div></div>
+    <div class="group">
+      <div class="row"><div class="lbl">셀룰러 요금제 레이블</div><span class="val">메인</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row static"><div class="lbl">이 회선 켜기</div><div class="switch on"></div></div>
+    </div>
+    <div class="sectlbl">LG U+</div>
+    <div class="group">
+      <div class="row"><div class="lbl">셀룰러 요금제</div><span class="val">넷플릭스 플러스 요금제 10S</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">네트워크 선택</div><span class="val">LG U+</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row" data-go="mynum"><div class="lbl">나의 전화번호</div><span class="val" data-num>+82 10-1234-5678</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">다른 기기에서의 통화</div><span class="val">근처에 있을 때</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">음성 및 데이터</div><span class="val">5G 자동</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">데이터 모드</div><span class="val">표준</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="group"><div class="row static"><div class="lbl">IP 주소 추적 제한</div><div class="switch on"></div></div></div>
+    <div class="group">
+      <div class="row static"><div class="lbl">데이터 로밍</div><div class="switch on"></div></div>
+      <div class="row"><div class="lbl">사용 내용</div><span class="val">243.08GB 사용 - 제한 없음</span><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="group">
+      <div class="row"><div class="lbl">이동통신사 서비스</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+      <div class="row"><div class="lbl">SIM PIN</div><svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>
+    </div>
+    <div class="group"><div class="row"><div class="lbl danger">eSIM 삭제</div></div></div>
+    <div class="group numbox" data-numeditor></div>
+  </section>
+
+  <!-- ===================== 검색 ===================== -->
+  <div class="searchdock" id="dock">
+    <button class="pill" id="openSearch"><svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg>검색</button>
+  </div>
+  <div id="searchView">
+    <div id="results"></div>
+    <div class="sbar">
+      <div class="sfield">
+        <svg class="mag" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="7"/><path d="M16 16l5 5"/></svg>
+        <input id="q" type="text" placeholder="검색" enterkeyhint="search" autocomplete="off">
+        <button class="clear" id="clearQ"><svg viewBox="0 0 10 10"><path d="M1 1l8 8M9 1l-8 8"/></svg></button>
+      </div>
+      <button class="xbtn" id="closeSearch"><svg viewBox="0 0 16 16"><path d="M2 2l12 12M14 2L2 14"/></svg></button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+/* ---------- icons ---------- */
+const ICONS = {
+  plane:'<path d="M21 15.5v-1.8l-7.6-4.8V3.6a1.4 1.4 0 0 0-2.8 0v5.3L3 13.7v1.8l7.6-2.4v5.2l-2 1.5V21l3.4-1 3.4 1v-1.2l-2-1.5v-5.2z"/>',
+  wifi:'<path d="M12 18.5a1.8 1.8 0 1 1 0 3.6 1.8 1.8 0 0 1 0-3.6zM5.6 13.4a9 9 0 0 1 12.8 0l-1.7 1.7a6.6 6.6 0 0 0-9.4 0zM2 9.8a14 14 0 0 1 20 0l-1.7 1.7a11.6 11.6 0 0 0-16.6 0z"/>',
+  bt:'<path d="M11 2h1.2l5.6 5.4-4.2 4.6 4.2 4.6L12.2 22H11v-7.6l-3.9 3.9-1.4-1.4L10.4 12 5.7 7.1l1.4-1.4L11 9.6zm2 2.9v4.4l2.1-2.3zm0 9.8v4.4l2.1-2.1z"/>',
+  cell:'<path d="M11 12.5a1 1 0 1 1 2 0V21h-2zM12 9.4a2.1 2.1 0 1 1 0 4.2 2.1 2.1 0 0 1 0-4.2zM7.6 7a6.2 6.2 0 0 0 0 8.8l-1.2 1.2a7.9 7.9 0 0 1 0-11.2zm8.8 0 1.2-1.2a7.9 7.9 0 0 1 0 11.2l-1.2-1.2a6.2 6.2 0 0 0 0-8.8zM4.7 4.1l1.2 1.2a10 10 0 0 0 0 12.2l-1.2 1.2a11.7 11.7 0 0 1 0-14.6zm14.6 0a11.7 11.7 0 0 1 0 14.6l-1.2-1.2a10 10 0 0 0 0-12.2z"/>',
+  link:'<path d="M9.2 14.8a4 4 0 0 1 0-5.6l2.3-2.3a4 4 0 0 1 5.6 5.6l-1 1-1.4-1.4 1-1a2 2 0 0 0-2.8-2.8l-2.3 2.3a2 2 0 0 0 0 2.8zm5.6-5.6a4 4 0 0 1 0 5.6l-2.3 2.3a4 4 0 0 1-5.6-5.6l1-1 1.4 1.4-1 1a2 2 0 0 0 2.8 2.8l2.3-2.3a2 2 0 0 0 0-2.8z"/>',
+  batt:'<path d="M3 8.5A2.5 2.5 0 0 1 5.5 6h12A2.5 2.5 0 0 1 20 8.5v7a2.5 2.5 0 0 1-2.5 2.5h-12A2.5 2.5 0 0 1 3 15.5zm2 .2v6.6c0 .4.3.7.7.7h11.6c.4 0 .7-.3.7-.7V8.7a.7.7 0 0 0-.7-.7H5.7a.7.7 0 0 0-.7.7zM21 10h.6c.2 0 .4.2.4.4v3.2c0 .2-.2.4-.4.4H21zM6 9h11v6H6z"/>',
+  gear:'<path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zm8.4 5.1-1.9-.3a6.8 6.8 0 0 1-.6 1.5l1.1 1.6-1.6 1.6-1.6-1.1a6.8 6.8 0 0 1-1.5.6l-.3 1.9h-2.2l-.3-1.9a6.8 6.8 0 0 1-1.5-.6l-1.6 1.1-1.6-1.6 1.1-1.6a6.8 6.8 0 0 1-.6-1.5l-1.9-.3v-2.2l1.9-.3c.1-.5.3-1 .6-1.5L4.6 7.2l1.6-1.6 1.6 1.1c.5-.3 1-.5 1.5-.6l.3-1.9h2.2l.3 1.9c.5.1 1 .3 1.5.6l1.6-1.1 1.6 1.6-1.1 1.6c.3.5.5 1 .6 1.5l1.9.3z"/>',
+  access:'<path d="M12 2.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM4 8.2l.4-1.6c2.5.7 5 1 7.6 1s5.1-.3 7.6-1l.4 1.6c-2 .6-4 .9-6 1.1v3.4l2.2 8.1-1.6.4-2.2-7.2h-.8l-2.2 7.2-1.6-.4 2.2-8.1V9.3c-2-.2-4-.5-6-1.1z"/>',
+  mag:'<path d="M10.5 3a7.5 7.5 0 0 1 6 12l4.6 4.6-1.5 1.5-4.6-4.6A7.5 7.5 0 1 1 10.5 3zm0 2a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11z"/>',
+  sun:'<path d="M12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zM11 1h2v3h-2zm0 19h2v3h-2zM1 11h3v2H1zm19 0h3v2h-3zM4.2 5.6l1.4-1.4 2.1 2.1-1.4 1.4zm12.1 12.1 1.4-1.4 2.1 2.1-1.4 1.4zM4.2 18.4l2.1-2.1 1.4 1.4-2.1 2.1zM16.3 6.3l2.1-2.1 1.4 1.4-2.1 2.1z"/>',
+  bell:'<path d="M12 2.5a1.5 1.5 0 0 1 1.5 1.6A6 6 0 0 1 18 10v4.5l2 2.5v1H4v-1l2-2.5V10a6 6 0 0 1 4.5-5.9A1.5 1.5 0 0 1 12 2.5zM9.5 19h5a2.5 2.5 0 0 1-5 0z"/>',
+  phone:'<path d="M6.6 2.8c.6-.3 1.4-.1 1.8.5l2 3c.4.6.3 1.4-.2 1.9l-1.3 1.2a12 12 0 0 0 5.7 5.7l1.2-1.3c.5-.5 1.3-.6 1.9-.2l3 2c.6.4.8 1.2.5 1.8l-.9 1.8c-.5 1-1.6 1.6-2.7 1.4C11 19.4 4.6 13 3.4 6.4c-.2-1.1.4-2.2 1.4-2.7z"/>',
+  msg:'<path d="M12 3c5 0 9 3.4 9 7.6s-4 7.6-9 7.6c-.9 0-1.8-.1-2.6-.3L5 20l1.1-3.6C4.2 15 3 12.9 3 10.6 3 6.4 7 3 12 3z"/>',
+  globe:'<path d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm-1.4 2.2A8 8 0 0 0 4.1 11h3.4c.1-2.6.9-5 3.1-6.8zm2.8 0c2.2 1.8 3 4.2 3.1 6.8h3.4a8 8 0 0 0-6.5-6.8zM9.5 11h5c-.1-2.4-.9-4.6-2.5-6-1.6 1.4-2.4 3.6-2.5 6zm-5.4 2a8 8 0 0 0 6.5 6.8c-2.2-1.8-3-4.2-3.1-6.8zm5.4 0c.1 2.4.9 4.6 2.5 6 1.6-1.4 2.4-3.6 2.5-6zm6.9 0c-.1 2.6-.9 5-3.1 6.8a8 8 0 0 0 6.5-6.8z"/>',
+  spark:'<path d="M12 3c.6 4.6 2.4 6.4 7 7-4.6.6-6.4 2.4-7 7-.6-4.6-2.4-6.4-7-7 4.6-.6 6.4-2.4 7-7z"/>'
+};
+document.querySelectorAll('[data-ico]').forEach(el=>{
+  el.innerHTML = '<svg viewBox="0 0 24 24">'+(ICONS[el.dataset.ico]||'')+'</svg>';
+});
+const DEFAULT_AVATAR = '<svg viewBox="0 0 34 34"><circle cx="17" cy="15" r="9" fill="#fff"/><path d="M8 15c0-6 4-9 9-9s9 3 9 9c-2-3-4-4-9-4s-7 1-9 4z" fill="#3a2a24"/><circle cx="14" cy="16" r="1" fill="#000"/><circle cx="20" cy="16" r="1" fill="#000"/><path d="M15 19.5q2 1.4 4 0" stroke="#000" stroke-width=".9" fill="none"/></svg>';
+
+/* ---------- state (persisted per browser) ---------- */
+const store = {
+  get(k,d){ try{ const v = localStorage.getItem('mock_'+k); return v===null?d:v; }catch(e){ return d; } },
+  set(k,v){ try{ localStorage.setItem('mock_'+k,v); return true; }catch(e){ return false; } }
+};
+const state = {
+  name:   store.get('name','김이름'),
+  avatar: store.get('avatar',''),
+  number: store.get('number','010-1234-5678')
+};
+
+/* 표시 규칙
+   - "+"로 시작하면 입력한 그대로 표시 (예: +1 415-555-0100)
+   - 0으로 시작하는 한국 번호(하이픈 없이 쳐도 됨)는 +82 형식으로 바꿔서 표시
+     (예: 01011112222 → +82 10-1111-2222)
+   - 그 밖의 입력은 그대로 표시 */
+function intl(raw){
+  const s = String(raw).trim();
+  if(!s) return '';
+  if(s.startsWith('+')) return s;
+  const d = s.replace(/\D/g,'');
+  if(/^[\d\s\-()]+$/.test(s) && d.startsWith('0') && d.length>=9 && d.length<=11){
+    const n = d.slice(1);
+    if(n.length===10) return '+82 '+n.slice(0,2)+'-'+n.slice(2,6)+'-'+n.slice(6);
+    if(n.length===9)  return '+82 '+n.slice(0,2)+'-'+n.slice(2,5)+'-'+n.slice(5);
+    return '+82 '+n;
+  }
+  return s;
+}
+
+function render(){
+  document.querySelectorAll('[data-name]').forEach(e=>e.textContent=state.name);
+  document.querySelectorAll('[data-avatar]').forEach(e=>{
+    if(state.avatar){ e.style.backgroundImage='url("'+state.avatar+'")'; e.innerHTML=''; }
+    else { e.style.backgroundImage=''; e.innerHTML=DEFAULT_AVATAR; }
+  });
+  document.querySelectorAll('[data-num]').forEach(e=>e.textContent=intl(state.number));
+}
+
+function toast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(toast._t); toast._t=setTimeout(()=>t.classList.remove('show'),1400);
+}
+
+/* ---------- navigation stack ---------- */
+const stack=['main'];
+const pageEl=id=>document.getElementById('p-'+id);
+function go(id){
+  const cur=pageEl(stack[stack.length-1]), nxt=pageEl(id);
+  if(!nxt||cur===nxt) return;
+  nxt.classList.remove('hidden'); nxt.classList.add('off-right'); nxt.scrollTop=0;
+  void nxt.offsetWidth;
+  nxt.classList.remove('off-right'); cur.classList.add('off-left');
+  stack.push(id);
+  setTimeout(()=>cur.classList.add('hidden'),360);
+  updateDock();
+}
+function back(){
+  if(stack.length<2) return;
+  const cur=pageEl(stack.pop()), prev=pageEl(stack[stack.length-1]);
+  prev.classList.remove('hidden'); void prev.offsetWidth;
+  prev.classList.remove('off-left'); cur.classList.add('off-right');
+  setTimeout(()=>{cur.classList.add('hidden');cur.classList.remove('off-right')},360);
+  updateDock();
+}
+function resetTo(ids){
+  document.querySelectorAll('.page').forEach(p=>{p.classList.add('hidden');p.classList.remove('off-left','off-right')});
+  stack.length=0; ids.forEach(i=>stack.push(i));
+  ids.forEach((i,n)=>{ if(n<ids.length-1) pageEl(i).classList.add('off-left'); });
+  pageEl(ids[ids.length-1]).classList.remove('hidden'); pageEl(ids[ids.length-1]).scrollTop=0;
+  updateDock();
+}
+function updateDock(){ document.getElementById('dock').style.display = stack.length===1?'flex':'none'; }
+
+document.addEventListener('click',e=>{
+  const g=e.target.closest('[data-go]'); if(g){ go(g.dataset.go); return; }
+  if(e.target.closest('[data-back]')){ back(); return; }
+  const sw=e.target.closest('.switch'); if(sw){ sw.classList.toggle('on'); }
+});
+
+/* edge-swipe back */
+let sx=null,sy=0;
+document.getElementById('app').addEventListener('touchstart',e=>{const t=e.touches[0]; if(t.clientX-document.getElementById('app').getBoundingClientRect().left<24){sx=t.clientX;sy=t.clientY}},{passive:true});
+document.getElementById('app').addEventListener('touchend',e=>{ if(sx===null)return; const t=e.changedTouches[0]; if(t.clientX-sx>70&&Math.abs(t.clientY-sy)<60) back(); sx=null; });
+
+/* ---------- profile editor ---------- */
+const editor=document.getElementById('editor'), nameInput=document.getElementById('nameInput'),
+      fileInput=document.getElementById('fileInput'), fileName=document.getElementById('fileName');
+let pendingAvatar=null;
+document.getElementById('profileCard').addEventListener('click',()=>{
+  editor.classList.toggle('open');
+  if(editor.classList.contains('open')){ nameInput.value=state.name; pendingAvatar=null; fileName.textContent='선택한 파일 없음'; }
+});
+fileInput.addEventListener('change',()=>{
+  const f=fileInput.files[0]; if(!f) return;
+  fileName.textContent=f.name;
+  const img=new Image(), r=new FileReader();
+  r.onload=()=>{ img.onload=()=>{
+      // shrink to 240px square so it fits in storage
+      const s=240,c=document.createElement('canvas'); c.width=c.height=s;
+      const m=Math.min(img.width,img.height);
+      c.getContext('2d').drawImage(img,(img.width-m)/2,(img.height-m)/2,m,m,0,0,s,s);
+      pendingAvatar=c.toDataURL('image/jpeg',.85);
+    }; img.src=r.result; };
+  r.readAsDataURL(f);
+});
+document.getElementById('saveProfile').addEventListener('click',()=>{
+  const n=nameInput.value.trim(); if(n){ state.name=n; store.set('name',n); }
+  if(pendingAvatar){ state.avatar=pendingAvatar; store.set('avatar',pendingAvatar); }
+  render(); editor.classList.remove('open'); fileInput.value='';
+});
+document.getElementById('closeEditor').addEventListener('click',()=>editor.classList.remove('open'));
+
+/* ---------- phone-number editor (셀룰러 / LG U+ / 나의 전화번호) ---------- */
+function saveNumber(v){
+  v=String(v).trim();
+  if(!v){ toast('전화번호를 입력해 주세요'); return false; }
+  state.number=v; store.set('number',v);
+  document.querySelectorAll('[data-numeditor] input').forEach(i=>i.value=v);
+  render(); toast('저장됨'); return true;
+}
+document.querySelectorAll('[data-numeditor]').forEach(box=>{
+  box.innerHTML='<label>목업 화면에 표시할 전화번호</label>'+
+    '<input class="field" type="tel" placeholder="예: 010-1234-5678 또는 +1 415-555-0100">'+
+    '<button class="btn primary">저장</button>';
+  const inp=box.querySelector('input'), btn=box.querySelector('button');
+  inp.value=state.number;
+  const save=()=>{ if(saveNumber(inp.value)) inp.blur(); };
+  btn.addEventListener('click',save);
+  inp.addEventListener('keydown',e=>{ if(e.key==='Enter') save(); });
+});
+
+/* 나의 전화번호 화면: 번호를 누르면 그 자리에서 바로 수정 */
+(function(){
+  const band=document.querySelector('#p-mynum .numband');
+  band.style.cursor='text';
+  band.addEventListener('click',()=>{
+    if(band.querySelector('input')) return;
+    band.removeAttribute('data-num');
+    band.innerHTML='<input type="tel" style="width:100%;border:0;outline:0;text-align:center;font:inherit;background:none">';
+    const inp=band.firstChild; inp.value=state.number; inp.focus(); inp.select();
+    let done=false;
+    const finish=(save)=>{
+      if(done) return; done=true;
+      band.setAttribute('data-num','');
+      if(!(save && inp.value.trim() && saveNumber(inp.value))) render();
+    };
+    inp.addEventListener('keydown',e=>{ if(e.key==='Enter') finish(true); if(e.key==='Escape') finish(false); });
+    inp.addEventListener('blur',()=>finish(true));
+  });
+})();
+
+/* ---------- search ---------- */
+const INDEX=[
+  {t:'전화',ico:'phone',bg:'#34c759',path:['main','phone']},
+  {t:'나의 전화번호',sub:'전화',path:['main','phone','mynum']},
+  {t:'셀룰러',ico:'cell',bg:'#34c759',path:['main','cellular']},
+  {t:'셀룰러 데이터',sub:'전화',path:['main','phone']},
+  {t:'LG U+',sub:'셀룰러',path:['main','cellular','carrier']},
+  {t:'eSIM 삭제',sub:'셀룰러',path:['main','cellular']},
+  {t:'데이터 로밍',sub:'셀룰러 › LG U+',path:['main','cellular','carrier']},
+  {t:'Wi-Fi',ico:'wifi',bg:'#007aff',path:null},
+  {t:'Bluetooth',ico:'bt',bg:'#007aff',path:null},
+  {t:'개인용 핫스팟',ico:'link',bg:'#34c759',path:['main','cellular']},
+  {t:'배터리',ico:'batt',bg:'#34c759',path:null},
+  {t:'일반',ico:'gear',bg:'#8e8e93',path:null},
+  {t:'알림',ico:'bell',bg:'#ff3b30',path:null},
+  {t:'메시지',ico:'msg',bg:'#34c759',path:null}
+];
+const sv=document.getElementById('searchView'), q=document.getElementById('q'), results=document.getElementById('results');
+function showResults(){
+  const v=q.value.trim().toLowerCase();
+  if(!v){ results.innerHTML=''; return; }
+  const hits=INDEX.filter(i=>i.t.toLowerCase().includes(v)||(i.sub||'').toLowerCase().includes(v));
+  if(!hits.length){ results.innerHTML='<div class="empty">\''+q.value.replace(/</g,'&lt;')+'\'에 대한 결과 없음</div>'; return; }
+  results.innerHTML='<div class="group">'+hits.map((h,n)=>
+    '<div class="row'+(h.ico?' ic':'')+'" data-hit="'+n+'">'+
+      (h.ico?'<div class="icon" style="background:'+h.bg+'"><svg viewBox="0 0 24 24">'+ICONS[h.ico]+'</svg></div>':'')+
+      '<div class="lbl">'+h.t+(h.sub?'<small>'+h.sub+'</small>':'')+'</div>'+
+      '<svg class="chev" viewBox="0 0 8 14"><path d="M1 1l6 6-6 6"/></svg></div>').join('')+'</div>';
+  results.querySelectorAll('[data-hit]').forEach(r=>r.addEventListener('click',()=>{
+    const h=hits[+r.dataset.hit]; closeSearch(); if(h.path) resetTo(h.path);
+  }));
+}
+function closeSearch(){ sv.classList.remove('open'); q.blur(); }
+document.getElementById('openSearch').addEventListener('click',()=>{ sv.classList.add('open'); q.value=''; showResults(); setTimeout(()=>q.focus(),30); });
+document.getElementById('closeSearch').addEventListener('click',closeSearch);
+document.getElementById('clearQ').addEventListener('click',()=>{ q.value=''; showResults(); q.focus(); });
+q.addEventListener('input',showResults);
+q.addEventListener('compositionupdate',()=>setTimeout(showResults));
+q.addEventListener('keydown',e=>{ if(e.key==='Enter'){ const f=results.querySelector('[data-hit]'); if(f) f.click(); } });
+
+render(); updateDock();
+</script>
+</body>
+</html>

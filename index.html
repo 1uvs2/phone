@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ko">
 <head>
@@ -113,7 +112,8 @@ h1.large{font-size:34px;font-weight:700;letter-spacing:.3px;padding:2px 2px 18px
 #results{flex:1;overflow-y:auto;padding:calc(16px + env(safe-area-inset-top)) 16px 0}
 .sbar{display:flex;align-items:center;gap:10px;padding:10px 16px calc(max(env(safe-area-inset-bottom),12px))}
 .sfield{flex:1;min-width:0;display:flex;align-items:center;gap:8px;height:48px;border-radius:24px;background:#fff;padding:0 8px 0 16px;box-shadow:0 2px 14px rgba(0,0,0,.08)}
-.sfield input{flex:1;min-width:0;border:0;outline:0;font-size:17px;background:none;font-family:inherit}
+.sfield input{flex:1;min-width:0;border:0;outline:0;font-size:17px;background:transparent;font-family:inherit;color:#000000;-webkit-text-fill-color:#000000;opacity:1;caret-color:#007aff}
+.sfield input::placeholder{color:#8a8a8e;-webkit-text-fill-color:#8a8a8e;opacity:1}
 .clear{width:22px;height:22px;border-radius:50%;background:#8e8e93;border:0;display:grid;place-items:center;cursor:pointer;flex:none}
 .clear svg{width:9px;height:9px;stroke:#fff;stroke-width:3}
 .xbtn{width:48px;height:48px;border-radius:50%;background:#fff;border:0;display:grid;place-items:center;box-shadow:0 2px 14px rgba(0,0,0,.08);cursor:pointer;flex:none}
@@ -353,7 +353,7 @@ h1.large{font-size:34px;font-weight:700;letter-spacing:.3px;padding:2px 2px 18px
   <div class="group">
     <div class="row"><div class="lbl">셀룰러 요금제</div><span class="val" data-plan>5G 요금제</span><svg class="chev" viewBox="0 0 9 15"><path d="M1.5 1.5l6 6-6 6"/></svg></div>
     <div class="row"><div class="lbl">네트워크 선택</div><span class="val" data-carrier>LG U+</span><svg class="chev" viewBox="0 0 9 15"><path d="M1.5 1.5l6 6-6 6"/></svg></div>
-    <div class="row" data-go="mynum"><div class="lbl">나의 전화번호</div><span class="val" data-num></span><svg class="chev" viewBox="0 0 9 15"><path d="M1.5 1.5l6 6-6 6"/></svg></div>
+    <div class="row" data-go="mynum"><div class="lbl">나의 전화번호</div><span class="val" data-num></span></div>
     <div class="row"><div class="lbl">다른 기기에서의 통화</div><span class="val">근처에 있을 때</span><svg class="chev" viewBox="0 0 9 15"><path d="M1.5 1.5l6 6-6 6"/></svg></div>
     <div class="row"><div class="lbl">음성 및 데이터</div><span class="val">5G 자동</span><svg class="chev" viewBox="0 0 9 15"><path d="M1.5 1.5l6 6-6 6"/></svg></div>
     <div class="row"><div class="lbl">데이터 모드</div><span class="val">표준</span><svg class="chev" viewBox="0 0 9 15"><path d="M1.5 1.5l6 6-6 6"/></svg></div>
@@ -572,21 +572,7 @@ document.getElementById('sheetReset').addEventListener('click',()=>{
   Object.keys(DEF).forEach(k=>{ state[k]=DEF[k]; store.del(k); }); render(); closeSheet(); toast('초기화됨');
 });
 
-/* 나의 전화번호 화면: 번호를 누르면 바로 수정 */
-(function(){
-  const band=document.querySelector('#p-mynum .numband');
-  band.addEventListener('click',()=>{
-    if(band.querySelector('input')) return;
-    band.removeAttribute('data-num');
-    band.innerHTML='<input type="tel" style="width:100%;border:0;outline:0;text-align:center;font:inherit;background:none">';
-    const inp=band.firstChild; inp.value=state.number; inp.focus(); inp.select();
-    let done=false;
-    const fin=save=>{ if(done) return; done=true; band.setAttribute('data-num','');
-      const v=inp.value.trim(); if(save&&v){ state.number=v; store.set('number',v); } render(); };
-    inp.addEventListener('keydown',e=>{ if(e.key==='Enter') fin(true); if(e.key==='Escape') fin(false); });
-    inp.addEventListener('blur',()=>fin(true));
-  });
-})();
+/* 나의 전화번호 화면은 조회 전용: 수정은 프로필 편집에서만 가능 */
 
 /* ============ 검색 ============ */
 const INDEX=[
